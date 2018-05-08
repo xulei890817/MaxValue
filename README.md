@@ -138,5 +138,12 @@ print(result)
 #print 
 ```
 
+更好的使用方式，后期会转移到全部这种方式
+```python
+order = self.okex_market.api.order(order_id=123123123123, symbol="btc_usd", contract_type="quarter")
+print(await order.info())
+print(await order.cancel())
+
+```
 
 
