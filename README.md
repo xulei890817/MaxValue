@@ -91,3 +91,42 @@ use proxy
 from MaxValue.utils.proxy import proxy
 proxy = "http://proxy_ip:proxy_port"
 ```
+
+以okex的接口调用为例 
+
+https://github.com/okcoin-okex/API-docs-OKEx.com/tree/master/API-For-Futures-CN
+
+买卖简介
+```python
+    # 下单 
+    # 以看多的方式以市场价买入杠杆为10倍的1张 btc_usd的季度合约
+    # start("sell","short") 看跌
+    # 如需定价  trade.start("buy", "long").symbol("btc_usd").contract_type("quarter").amount(1).lever_rate(10).price(7300)
+    # 由于市场问题，只能存在一个杠杆
+    trade = self.okex_market.api.trade()
+    trade.start("buy", "long").symbol("btc_usd").contract_type("quarter").amount(1).lever_rate(10).as_market_price()
+    result = await trade.go()
+    print(result.order_id)
+    print(result)
+    
+    #print    {'result': True, 'order_id': 123123123123}
+```
+
+获取订单详情
+```python
+result = await self.okex_market.api.get_order_info(order_id=123123123123,symbol="btc_usd", contract_type="quarter")
+print(result)
+
+#print {'result': True, 'orders': [{'symbol': 'btc_usd', 'lever_rate': 10, 'amount': 1, 'fee': -5.31e-06, 'contract_name': 'BTC0629', 'unit_amount': 100, 'type': 1, 'price_avg': 9415.15, 'deal_amount': 1, 'price': 9415.16, 'create_date': 1525778802000, 'order_id': 123123123123, 'status': 2}]}
+```
+
+删除订单
+```python
+result = await self.okex_market.api.cancel_future(order_id=123123123123,symbol="btc_usd", contract_type="quarter")
+print(result)
+
+#print 
+```
+
+
+

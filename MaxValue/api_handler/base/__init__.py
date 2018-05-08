@@ -6,6 +6,95 @@ import asyncio
 from MaxValue.utils.proxy import proxy
 import json
 import inspect
+from enum import Enum
+
+
+class Term(Enum):
+    Long = "long"
+    Short = "short"
+
+
+class Trade(object):
+    def __init__(self, api):
+        self.tag = None
+        self._api = api
+        self.trade_type = None
+        self._match_price = False
+        self._price = None
+        self._symbol = None
+        self._amount = None
+        self._contract_type = None
+        self.term_type = None
+        self._lever_rate = 1
+
+    def start(self, trade_type, term_type):
+        if trade_type == "buy" or trade_type == "sell":
+            self.trade_type = trade_type
+        else:
+            raise Exception("错误!trade_type只能设置成buy或者sell")
+
+        if isinstance(term_type, Term):
+            self.term_type = trade_type
+        elif isinstance(term_type, str):
+            if term_type == "long":
+                self.term_type = Term.Long
+            elif term_type == "short":
+                self.term_type = Term.Short
+        return self
+
+    def price(self, price):
+        self._price = price
+        return self
+
+    def symbol(self, symbol):
+        self._symbol = symbol
+        return self
+
+    def amount(self, amount):
+        self._amount = amount
+        return self
+
+    def contract_type(self, contract_type):
+        self._contract_type = contract_type
+        return self
+
+    def lever_rate(self, lever_rate):
+        self._lever_rate = lever_rate
+        return self
+
+    def as_market_price(self):
+        self._match_price = True
+        return self
+
+    @abstractmethod
+    def check(self):
+        pass
+
+    async def go(self):
+        self.check()
+        if self.trade_type == "buy":
+            return await self._buy()
+        elif self.trade_type == "sell":
+            return await self._sell()
+
+    @abstractmethod
+    async def _buy(self):
+        return self
+
+    @abstractmethod
+    async def _sell(self):
+        return self
+
+
+class Order(object):
+    def __init__(self):
+        pass
+
+    def info(self, order_id):
+        pass
+
+    def list(self):
+        pass
 
 
 class TradeAPI(ABC):
@@ -22,7 +111,25 @@ class TradeAPI(ABC):
     async def sub_channel(self):
         pass
 
+    @abstractmethod
+    def trade(self):
+        pass
 
+    @abstractmethod
+    async def sell(self, symbol, term_type, amount, market_price=False, price=None, **kwargs):
+        pass
+
+    @abstractmethod
+    async def buy(self, symbol, term_type, amount, market_price=False, price=None, **kwargs):
+        pass
+
+    @abstractmethod
+    async def get_order_info(self, order_id, **kwargs):
+        pass
+
+    @abstractmethod
+    async def get_order_list(self):
+        pass
 
 
 class WSAPI(object):

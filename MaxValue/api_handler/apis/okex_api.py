@@ -1,7 +1,7 @@
 from asyncio import AbstractEventLoop
 
 from MaxValue.api_handler.apis.okex import OKEXRESTTradeAPI, OKEXWSTradeAPI
-from MaxValue.api_handler.base import TradeAPI
+from MaxValue.api_handler.base import TradeAPI, Trade, Term
 import arrow
 
 from MaxValue.api_handler.apis.orders import order_manager
@@ -19,14 +19,53 @@ class SellError(Exception):
     pass
 
 
+class OKEXTrade(Trade):
+
+    def check(self):
+        if self._match_price:
+            self._price = "0"
+        elif not self._price:
+            raise Exception("没有设置价格参数")
+
+        if not self._symbol:
+            raise Exception("没有设置symbol参数")
+
+        if not self._amount:
+            raise Exception("没有设置amount参数")
+
+        if not self._contract_type:
+            raise Exception("没有设置contract_type参数")
+
+    """
+       1:买涨 开多 2:卖跌  开空 3:卖涨  平多 4:买跌  平空
+       """
+
+    def gen_match_price(self):
+        return "1" if self._match_price else "0"
+
+    async def _buy(self):
+        if self.term_type == Term.Long:
+            return await self._api.future_trade(symbol=self._symbol, contract_type=self._contract_type, price=self._price, amount=self._amount, type="1", match_price=self.gen_match_price(),
+                                                lever_rate=str(self._lever_rate))
+        else:
+            return await self._api.future_trade(symbol=self._symbol, contract_type=self._contract_type, price=self._price, amount=self._amount, type="4", match_price=self.gen_match_price(),
+                                                lever_rate=str(self._lever_rate))
+
+    async def _sell(self):
+        if self.term_type == Term.Long:
+            return await self._api.future_trade(symbol=self._symbol, contract_type=self._contract_type, price=self._price, amount=self._amount, type="3", match_price=self.gen_match_price(),
+                                                lever_rate=str(self._lever_rate))
+        else:
+            return await self._api.future_trade(symbol=self._symbol, contract_type=self._contract_type, price=self._price, amount=self._amount, type="2", match_price=self.gen_match_price(),
+                                                lever_rate=str(self._lever_rate))
+
+
 class OKEXAPI(TradeAPI):
     market_info = {}
 
     def __init__(self, loop: AbstractEventLoop):
         super(OKEXAPI, self).__init__()
         self.loop = loop
-        self.api_key = None
-        self.sign = None
         self.rest_api = OKEXRESTTradeAPI(loop)
         self.ws_api = OKEXWSTradeAPI(loop)
         self.ws_api.set_msg_handler(self)
@@ -46,10 +85,13 @@ class OKEXAPI(TradeAPI):
     async def sub_channel(self, channel):
         await self.ws_api.sub_channels(channel)
 
+    def trade(self):
+        return OKEXTrade(self.rest_api)
+
     async def login_and_sub_trades(self):
         await self.ws_api.send_str("login", {
             "api_key": self.api_key,
-            "sign": self.sign
+            "sign": self.secret_key
         })
         while True:
             if self.ws_api.is_auth:
@@ -75,15 +117,14 @@ class OKEXAPI(TradeAPI):
     def get_market_info(self):
         return self.market_info
 
-    def login(self, api_key, api_secret):
-        self.rest_api.api_key = api_key
-        self.rest_api.secret_key = api_secret
+    def login(self, api_key, secret_key):
+        self.rest_api.set_auth(api_key, secret_key)
         self.ws_api.api_key = api_key
-        self.ws_api.secret_key = api_secret
+        self.ws_api.secret_key = secret_key
 
     """
-    1:买涨 开多 2:卖跌  开空 3:卖涨  平多 4:买跌  平空
-    """
+      1:买涨 开多 2:卖跌  开空 3:卖涨  平多 4:买跌  平空
+      """
 
     async def buy(self, price, amount, type=1, match_price="0"):
         try:
@@ -126,27 +167,6 @@ class OKEXAPI(TradeAPI):
             traceback.print_exc()
             logger.warn(e)
 
-    async def sell_market_price(self, amount, price=1, type=2, match_price="1"):
-        try:
-            result = await self.rest_api.future_trade(symbol="btc_usd", contract_type="quarter",
-                                                      price=str(price), amount=str(amount), type=str(type),
-                                                      match_price=match_price,
-                                                      lever_rate="10")
-        except Exception as e:
-            logger.warn(e)
-
-    async def buy_market_price(self, amount, price=1, type=2, match_price="1"):
-        try:
-            result = await self.rest_api.future_trade(symbol="btc_usd", contract_type="quarter",
-                                                      price=str(price), amount=str(amount), type=str(type),
-                                                      match_price=match_price,
-                                                      lever_rate="10")
-        except Exception as e:
-            logger.warn(e)
-
-    def get_trade_info(self):
-        pass
-
     async def get_position(self):
         result = await self.rest_api.future_position_4fix(symbol="btc_usd", contract_type="quarter")
         logger.debug(result)
@@ -172,7 +192,7 @@ class OKEXAPI(TradeAPI):
         logger.debug(result)
         return result
 
-    async def cancel_future(self, order_id, symbol="btc_usd", contract_type="quarter"):
+    async def cancel_future(self, order_id, symbol, contract_type):
         result = await self.rest_api.future_cancel(order_id=order_id, symbol=symbol, contract_type=contract_type)
         logger.debug(result)
         return result
@@ -182,19 +202,13 @@ class OKEXAPI(TradeAPI):
         logger.debug(result)
         return result["orders"][0]
 
-    async def get_orders_info(self, order_id=2000):
-        result = await self.rest_api.future_order_info(symbol="btc_usd", contract_type="quarter", order_id=order_id)
+    async def get_order_info(self, symbol, contract_type, order_id):
+        result = await self.rest_api.future_order_info(symbol=symbol, contract_type=contract_type, order_id=order_id)
         logger.debug(result)
         return result
 
-    def get_all_my_trades(self):
+    async def get_order_list(self):
         pass
-
-    def get_trade_transaction_rate(self):
-        return {
-            "sell": 0.0001,
-            "buy": 0.0001
-        }
 
 
 import csv

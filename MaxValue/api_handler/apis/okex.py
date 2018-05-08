@@ -33,9 +33,9 @@ class OKEXRESTTradeAPI(object):
             "api_key": self.api_key
         }
 
-    def set_auth(self, api_key, sign):
+    def set_auth(self, api_key, secret_key):
         self.api_key = api_key
-        self.sign = sign
+        self.secret_key = secret_key
         self.base_payload = {
             "api_key": self.api_key
         }
@@ -114,16 +114,18 @@ class OKEXRESTTradeAPI(object):
                 logger.debug(payload)
                 async with self.session.post(f"{self.base_url}/{method}.do",
                                              proxy=self.proxy, data=payload, timeout=10) as resp:
-                    return await resp.json()
+                    response = await resp.json()
+                return response
             else:
                 payload = {}
                 payload.update(kwargs)
                 logger.debug(payload)
                 async with self.session.get(f"{self.base_url}/{method}.do",
                                             proxy=self.proxy, params=payload, timeout=10) as resp:
-                    return await resp.json()
+                    response = await resp.json()
+                return response
         except Exception as e:
-            print(e)
+            logger.error(e)
 
     def connect_type(self):
         return "rest"
@@ -164,7 +166,6 @@ class OKEXWSTradeAPI(WSAPI):
         super().__init__()
         self.api_key = None
         self.secret_key = None
-        self.sign = ""
         self._session = None
         self._connect_status_flag = 0
         self._loop = loop
