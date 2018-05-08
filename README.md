@@ -5,6 +5,10 @@ treasure  in the  deep sea.find the light in dark.
 
 pip install git+https://github.com/xulei890817/MaxValue.git
 
+# note
+python version>3.5
+
+
 #sample code
 ```python
 
