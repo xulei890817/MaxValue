@@ -20,7 +20,7 @@ max_try_time = 5
 
 class EmptyResultError(BitmexBaseException):
     def __init__(self, msg):
-        super(__class__, self).__init__()
+        super(EmptyResultError, self).__init__()
 
 
 class BitMexTrade(Trade):
@@ -36,9 +36,6 @@ class BitMexTrade(Trade):
 
         if not self._amount:
             raise Exception("没有设置amount参数")
-
-        if not self._contract_type:
-            raise Exception("没有设置contract_type参数")
 
     """
        1:买涨 开多 2:卖跌  开空 3:卖涨  平多 4:买跌  平空
