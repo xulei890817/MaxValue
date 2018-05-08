@@ -7,7 +7,9 @@ pip install git+https://github.com/xulei890817/MaxValue.git
 
 # note
 python version>3.5
-
+if you want etryr your code when any exception happened.Try my python lib.
+<hr>
+https://github.com/xulei890817/retryme.git
 
 #sample code
 ```python
