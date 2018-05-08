@@ -86,14 +86,21 @@ class Trade(object):
         return self
 
 
-class Order(object):
-    def __init__(self):
+class BaseOrder(object):
+    def __init__(self, api):
+        self.api = api
+        self.order_id = None
+
+    @abstractmethod
+    def info(self):
         pass
 
-    def info(self, order_id):
-        pass
-
+    @abstractmethod
     def list(self):
+        pass
+
+    @abstractmethod
+    def cancel(self):
         pass
 
 
@@ -113,6 +120,10 @@ class TradeAPI(ABC):
 
     @abstractmethod
     def trade(self):
+        pass
+
+    @abstractmethod
+    def order(self):
         pass
 
     @abstractmethod

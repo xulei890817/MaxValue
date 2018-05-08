@@ -1,7 +1,7 @@
 from asyncio import AbstractEventLoop
 
 from MaxValue.api_handler.apis.okex import OKEXRESTTradeAPI, OKEXWSTradeAPI
-from MaxValue.api_handler.base import TradeAPI, Trade, Term
+from MaxValue.api_handler.base import TradeAPI, Trade, Term, BaseOrder
 import arrow
 
 from MaxValue.api_handler.apis.orders import order_manager
@@ -60,6 +60,40 @@ class OKEXTrade(Trade):
                                                 lever_rate=str(self._lever_rate))
 
 
+class OKEXOrder(BaseOrder):
+
+    def __init__(self, api, **kwargs):
+        super(OKEXOrder, self).__init__(api)
+        self.symbol = None
+        self.contract_type = None
+
+    def add_args(self, **kwargs):
+        self.order_id = kwargs["order_id"]
+        self.symbol = kwargs["symbol"]
+        self.contract_type = kwargs["contract_type"]
+        return self
+
+    def check(self):
+        if not self.symbol or not self.contract_type:
+            raise Exception("okex需要设置symbol,contract_type两个变量先")
+
+    async def info(self):
+        self.check()
+        result = await self.api.future_order_info(symbol=self.symbol, contract_type=self.contract_type, order_id=self.order_id)
+        logger.debug(result)
+        return result
+
+    async def list(self):
+        self.check()
+        pass
+
+    async def cancel(self):
+        self.check()
+        result = await self.api.future_cancel(order_id=self.order_id, symbol=self.symbol, contract_type=self.contract_type)
+        logger.debug(result)
+        return result
+
+
 class OKEXAPI(TradeAPI):
     market_info = {}
 
@@ -84,9 +118,6 @@ class OKEXAPI(TradeAPI):
 
     async def sub_channel(self, channel):
         await self.ws_api.sub_channels(channel)
-
-    def trade(self):
-        return OKEXTrade(self.rest_api)
 
     async def login_and_sub_trades(self):
         await self.ws_api.send_str("login", {
@@ -113,6 +144,12 @@ class OKEXAPI(TradeAPI):
                         logger.info(f"频道{data_item['data']['channel']}订阅成功")
                 except Exception as e:
                     logger.warn(e)
+
+    def trade(self):
+        return OKEXTrade(self.rest_api)
+
+    def order(self, order_id, symbol, contract_type):
+        return OKEXOrder(self.rest_api).add_args(order_id=order_id, symbol=symbol, contract_type=contract_type)
 
     def get_market_info(self):
         return self.market_info
