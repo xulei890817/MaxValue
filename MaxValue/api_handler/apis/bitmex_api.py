@@ -2,7 +2,7 @@ import bitmex
 from bravado.exception import HTTPServerError, HTTPServiceUnavailable, HTTPBadRequest
 
 from MaxValue.api_handler.apis.my_bitmex import BITMEXWSTradeAPI
-from MaxValue.api_handler.base import TradeAPI
+from MaxValue.api_handler.base import TradeAPI, Trade, Term
 import arrow
 from MaxValue.api_handler.apis.orders import order_manager
 from MaxValue.api_handler.apis.orders import Order
@@ -20,7 +20,44 @@ max_try_time = 5
 
 class EmptyResultError(BitmexBaseException):
     def __init__(self, msg):
-        super(__class__, self).__init__(msg)
+        super(__class__, self).__init__()
+
+
+class BitMexTrade(Trade):
+
+    def check(self):
+        if self._match_price:
+            self._price = "0"
+        elif not self._price:
+            raise Exception("没有设置价格参数")
+
+        if not self._symbol:
+            raise Exception("没有设置symbol参数")
+
+        if not self._amount:
+            raise Exception("没有设置amount参数")
+
+        if not self._contract_type:
+            raise Exception("没有设置contract_type参数")
+
+    """
+       1:买涨 开多 2:卖跌  开空 3:卖涨  平多 4:买跌  平空
+       """
+
+    def gen_match_price(self):
+        return "1" if self._match_price else "0"
+
+    async def _buy(self):
+        if self._match_price:
+            return self._api.Order.Order_new(symbol=self._symbol, orderQty=self._amount).result()
+        else:
+            return self._api.Order.Order_new(symbol=self._symbol, orderQty=self._amount, price=self._price).result()
+
+    async def _sell(self):
+        if self._match_price:
+            return self._api.Order.Order_new(symbol=self._symbol, orderQty=self._amount).result()
+        else:
+            return self._api.Order.Order_new(symbol=self._symbol, orderQty=self._amount, price=self._price).result()
 
 
 class BitMexAPI(TradeAPI):
@@ -166,9 +203,9 @@ class BitMexAPI(TradeAPI):
         logger.debug(result[0])
         return result[0]
 
-    @error_retry(exceptions=[HTTPServiceUnavailable, EmptyResultError], retry_times=10, sleep_seconds=0.2)
-    async def get_order_status_by_id(self, symbol, order_id=None):
-        result = self.rest_api.Order.Order_getOrders(filter=json.dumps({'symbol': symbol, 'orderID': order_id})).result()
+    @error_retry(exceptions=[HTTPServiceUnavailable, EmptyResultError], retry_times=3, sleep_seconds=0.2)
+    async def get_order_info(self, order_id=None):
+        result = self.rest_api.Order.Order_getOrders(filter=json.dumps({'orderID': order_id})).result()
         logger.debug(result[0])
         if result[0]:
             return result[0][0]
@@ -204,12 +241,6 @@ class BitMexAPI(TradeAPI):
     async def get_all_my_trades(self, symbol='XBTM18'):
         result = self.rest_api.Trade.Trade_get(filter=json.dumps({'symbol': symbol})).result()
         logger.debug(result)
-
-    def get_trade_transaction_rate(self):
-        return {
-            "sell": 0.0001,
-            "buy": 0.0001
-        }
 
 
 import csv
