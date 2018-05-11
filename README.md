@@ -146,4 +146,11 @@ print(await order.cancel())
 
 ```
 
+获取仓位
+```python
+# position = self.okex_market.api.fixposition()
+# result = await  position.get("btc_usd", "quarter")
+# print(result)
+```
+
 

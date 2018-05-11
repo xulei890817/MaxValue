@@ -121,8 +121,8 @@ class BitMexOrder(BaseOrder):
 
 
 class BitMexPostition(BasePosition):
-    def __init__(self):
-        pass
+    def __init__(self, api):
+        self.api = api
 
     async def get(self, symbol):
         self.tag = "bitmex仓位"
@@ -158,6 +158,9 @@ class BitMexAPI(TradeAPI):
 
     def trade(self):
         return BitMexTrade(self.rest_api)
+
+    def position(self):
+        return BitMexPostition(self.rest_api)
 
     def order(self, order_id, symbol, contract_type):
         return BitMexOrder(self.rest_api).add_args(order_id=order_id)

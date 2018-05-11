@@ -107,7 +107,8 @@ class OKEXOrder(BaseOrder):
 
 
 class OKEXPostition(BasePosition):
-    def __init__(self):
+    def __init__(self, api):
+        self.api = api
         self.tag = "okex全仓"
 
     async def get(self, symbol, contract_type):
@@ -117,10 +118,9 @@ class OKEXPostition(BasePosition):
 
 
 class OKEXFixPostition(BasePosition):
-    def __init__(self):
+    def __init__(self, api):
         self.tag = "okex逐仓"
-
-
+        self.api = api
 
     async def get(self, symbol, contract_type):
         result = await self.api.future_position_4fix(symbol=symbol, contract_type=contract_type)
@@ -186,10 +186,10 @@ class OKEXAPI(TradeAPI):
         return OKEXOrder(self.rest_api).add_args(order_id=order_id, symbol=symbol, contract_type=contract_type)
 
     def position(self):
-        return OKEXPostition()
+        return OKEXPostition(self.rest_api)
 
     def fixposition(self):
-        return OKEXFixPostition()
+        return OKEXFixPostition(self.rest_api)
 
     def get_market_info(self):
         return self.market_info
