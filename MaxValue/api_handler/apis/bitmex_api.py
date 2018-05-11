@@ -2,7 +2,7 @@ import bitmex
 from bravado.exception import HTTPServerError, HTTPServiceUnavailable, HTTPBadRequest
 
 from MaxValue.api_handler.apis.my_bitmex import BITMEXWSTradeAPI
-from MaxValue.api_handler.base import TradeAPI, Trade, Term, BaseOrder
+from MaxValue.api_handler.base import TradeAPI, Trade, Term, BaseOrder, BasePosition
 import arrow
 from MaxValue.api_handler.apis.orders import order_manager
 from MaxValue.api_handler.apis.orders import Order
@@ -116,6 +116,17 @@ class BitMexOrder(BaseOrder):
     async def cancel(self):
         self.check()
         result = await self.api.cancel_future(order_id=self.order_id)
+        logger.debug(result)
+        return result
+
+
+class BitMexPostition(BasePosition):
+    def __init__(self):
+        pass
+
+    async def get(self, symbol):
+        self.tag = "bitmex仓位"
+        result = await self.api.get_position(symbol=symbol)
         logger.debug(result)
         return result
 
@@ -300,9 +311,10 @@ class BitMexAPI(TradeAPI):
         result = self.rest_api.Instrument.Instrument_get(symbol=symbol).result()
         logger.debug(result[0])
 
-    async def get_all_my_positions(self, symbol='XBTM18'):
+    async def get_position(self, symbol='XBTM18'):
+        logger.debug("执行get_position")
         result = self.rest_api.Position.Position_get(filter=json.dumps({'symbol': symbol})).result()
-        logger.debug(result[0])
+        return result
 
     async def get_all_my_trades(self, symbol='XBTM18'):
         result = self.rest_api.Trade.Trade_get(filter=json.dumps({'symbol': symbol})).result()

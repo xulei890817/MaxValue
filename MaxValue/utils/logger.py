@@ -17,7 +17,7 @@ console_handler.formatter = formatter  # 也可以直接给formatter赋值
 console_handler.setLevel(logging.DEBUG)
 
 # 为logger添加的日志处理器，可以自定义日志处理器让其输出到其他地方
-logger.addHandler(file_handler)
+# logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
 # 指定日志的最低输出级别，默认为WARN级别

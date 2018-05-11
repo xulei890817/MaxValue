@@ -1,7 +1,7 @@
 from asyncio import AbstractEventLoop
 
 from MaxValue.api_handler.apis.okex import OKEXRESTTradeAPI, OKEXWSTradeAPI
-from MaxValue.api_handler.base import TradeAPI, Trade, Term, BaseOrder
+from MaxValue.api_handler.base import TradeAPI, Trade, Term, BaseOrder, BasePosition
 import arrow
 
 from MaxValue.api_handler.apis.orders import order_manager
@@ -64,6 +64,7 @@ class OKEXOrder(BaseOrder):
 
     def __init__(self, api, **kwargs):
         super(OKEXOrder, self).__init__(api)
+        self.tag = "okex交易"
         self.symbol = None
         self.contract_type = None
 
@@ -101,6 +102,28 @@ class OKEXOrder(BaseOrder):
     async def cancel(self):
         self.check()
         result = await self.api.future_cancel(order_id=self.order_id, symbol=self.symbol, contract_type=self.contract_type)
+        logger.debug(result)
+        return result
+
+
+class OKEXPostition(BasePosition):
+    def __init__(self):
+        self.tag = "okex全仓"
+
+    async def get(self, symbol, contract_type):
+        result = await self.api.future_position(symbol=symbol, contract_type=contract_type)
+        logger.debug(result)
+        return result
+
+
+class OKEXFixPostition(BasePosition):
+    def __init__(self):
+        self.tag = "okex逐仓"
+
+
+
+    async def get(self, symbol, contract_type):
+        result = await self.api.future_position_4fix(symbol=symbol, contract_type=contract_type)
         logger.debug(result)
         return result
 
@@ -161,6 +184,12 @@ class OKEXAPI(TradeAPI):
 
     def order(self, order_id, symbol, contract_type):
         return OKEXOrder(self.rest_api).add_args(order_id=order_id, symbol=symbol, contract_type=contract_type)
+
+    def position(self):
+        return OKEXPostition()
+
+    def fixposition(self):
+        return OKEXFixPostition()
 
     def get_market_info(self):
         return self.market_info

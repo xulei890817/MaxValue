@@ -107,17 +107,10 @@ class BaseOrder(object):
 class BasePosition(object):
     def __init__(self, api):
         self.api = api
+        self.tag = None
 
     @abstractmethod
     def get(self):
-        pass
-
-    @abstractmethod
-    def list(self):
-        pass
-
-    @abstractmethod
-    def cancel(self):
         pass
 
 
