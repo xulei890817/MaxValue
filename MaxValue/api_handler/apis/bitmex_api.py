@@ -2,7 +2,7 @@ import bitmex
 from bravado.exception import HTTPServerError, HTTPServiceUnavailable, HTTPBadRequest
 
 from MaxValue.api_handler.apis.my_bitmex import BITMEXWSTradeAPI
-from MaxValue.api_handler.base import TradeAPI, Trade, Term
+from MaxValue.api_handler.base import TradeAPI, Trade, Term, BaseOrder
 import arrow
 from MaxValue.api_handler.apis.orders import order_manager
 from MaxValue.api_handler.apis.orders import Order
@@ -16,6 +16,7 @@ from RetryMe.retryme import error_retry, SLEEPRULE
 
 result_check_flag = 0x13849948
 max_try_time = 5
+from datetime import datetime
 
 
 class EmptyResultError(BitmexBaseException):
@@ -57,6 +58,68 @@ class BitMexTrade(Trade):
             return self._api.Order.Order_new(symbol=self._symbol, orderQty=self._amount, price=self._price).result()
 
 
+class BitMexOrder(BaseOrder):
+
+    def __init__(self, api, **kwargs):
+        super(BaseOrder, self).__init__(api)
+        self.symbol = None
+        self.contract_type = None
+
+    def add_args(self, **kwargs):
+        self.order_id = kwargs["order_id"]
+        return self
+
+    def check(self):
+        if not self.order_id:
+            raise Exception("需要设置order_id变量先")
+
+    async def info(self):
+        self.check()
+        result = await self.api.get_order_info(order_id=self.order_id)
+        logger.debug(result)
+        return result
+
+    async def list(self, start_time=None, end_time=None, **filter):
+        """
+
+        :param start_time: 开始时间
+        :param end_time: 结束时间
+        :param filter: 选择器 具体支持的选项
+        :return:
+        """
+
+        if start_time and end_time:
+            if isinstance(start_time, datetime) and isinstance(end_time, datetime):
+                pass
+            else:
+                raise Exception("start_time,end_time 必须是datetime类型")
+        elif start_time is None and end_time is None:
+            start_time = arrow.get().shift(days=-10).datetime
+            end_time = arrow.get().datetime
+        elif start_time is None:
+            start_time = arrow.get(end_time).shift(days=-10).datetime
+        elif end_time is None:
+            end_time = arrow.get().datetime
+
+        _ = {}
+        self.check()
+        for i in ["symbol", "order_id", "side", "status"]:
+            if i in filter:
+                _.update({"symbol": filter["symbol"]}) if i == "symbol" else 1
+                _.update({"orderID": filter["order_id"]}) if i == "order_id" else 1
+                _.update({"side": filter["side"]}) if i == "side" else 1
+                _.update({"ordStatus": filter["status"]}) if i == "status" else 1
+        result = await self.api.future_orders_info(filter=_, startTime=start_time, endTime=end_time)
+        logger.debug(result)
+        return result
+
+    async def cancel(self):
+        self.check()
+        result = await self.api.cancel_future(order_id=self.order_id)
+        logger.debug(result)
+        return result
+
+
 class BitMexAPI(TradeAPI):
 
     def __init__(self, loop):
@@ -81,6 +144,12 @@ class BitMexAPI(TradeAPI):
         logger.info("订阅频道")
         # await self.wsapi.sub_channels("instrument", "quote")
         await self.ws_api.sub_channels("quote")
+
+    def trade(self):
+        return BitMexTrade(self.rest_api)
+
+    def order(self, order_id, symbol, contract_type):
+        return BitMexOrder(self.rest_api).add_args(order_id=order_id)
 
     async def _on_message(self, msg):
         async def trade(data_item):

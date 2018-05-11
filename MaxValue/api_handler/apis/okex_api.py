@@ -83,9 +83,20 @@ class OKEXOrder(BaseOrder):
         logger.debug(result)
         return result
 
-    async def list(self):
+    async def list(self, **filter):
+        """
+        okex的这个api需要传入
+        filter = {"order_ids"=[123,321],"symbol":"btc_usd","contract_type":"quarter"}
+        :param filter:
+        :return:
+        """
+        order_ids = filter["order_ids"]
+        symbol = filter["symbol"]
+        contract_type = filter["contract_type"]
         self.check()
-        pass
+        result = await self.api.future_orders_info(symbol=symbol, contract_type=contract_type, order_id=",".join(order_ids))
+        logger.debug(result)
+        return result
 
     async def cancel(self):
         self.check()

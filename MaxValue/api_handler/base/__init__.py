@@ -104,6 +104,23 @@ class BaseOrder(object):
         pass
 
 
+class BasePosition(object):
+    def __init__(self, api):
+        self.api = api
+
+    @abstractmethod
+    def get(self):
+        pass
+
+    @abstractmethod
+    def list(self):
+        pass
+
+    @abstractmethod
+    def cancel(self):
+        pass
+
+
 class TradeAPI(ABC):
     def __init__(self):
         self.update_handler = None
