@@ -92,7 +92,7 @@ class OKEXOrder(BaseOrder):
         self.amount = result["orders"][0]["amount"]
         self.lever_rate = result["orders"][0]["lever_rate"]
         self.deal_amount = result["orders"][0]["deal_amount"]
-        self.contract_type = result["orders"][0]["contract_type"]
+        self.contract_name = result["orders"][0]["contract_name"]
         return result
 
     async def list(self, **filter):
