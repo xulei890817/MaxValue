@@ -67,6 +67,11 @@ class OKEXOrder(BaseOrder):
         self.tag = "okex交易"
         self.symbol = None
         self.contract_type = None
+        self.status = None
+        self.amount = None
+        self.contract_name = None
+        self.type = None
+        self.lever_rate = None
 
     def add_args(self, **kwargs):
         self.order_id = kwargs["order_id"]
@@ -82,6 +87,10 @@ class OKEXOrder(BaseOrder):
         self.check()
         result = await self.api.future_order_info(symbol=self.symbol, contract_type=self.contract_type, order_id=self.order_id)
         logger.debug(result)
+        self.status = result["orders"][0]["status"]
+        self.amount = result["orders"][0]["amount"]
+        self.lever_rate = result["orders"][0]["lever_rate"]
+        self.contract_type = result["orders"][0]["contract_type"]
         return result
 
     async def list(self, **filter):

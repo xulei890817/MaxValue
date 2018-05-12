@@ -98,8 +98,8 @@ if __name__ == "__main__":
 
 use proxy
 ```python
-from MaxValue.utils.proxy import proxy
-proxy = "http://proxy_ip:proxy_port"
+from MaxValue.utils import proxy
+proxy.proxy = "http://proxy_ip:proxy_port"
 ```
 
 以okex的接口调用为例 
