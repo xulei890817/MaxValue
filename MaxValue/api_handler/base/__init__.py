@@ -44,6 +44,7 @@ class Trade(object):
 
     def price(self, price):
         self._price = price
+        self._match_price = False
         return self
 
     def symbol(self, symbol):

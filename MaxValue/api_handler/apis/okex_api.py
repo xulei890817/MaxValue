@@ -71,6 +71,7 @@ class OKEXOrder(BaseOrder):
         self.amount = None
         self.contract_name = None
         self.type = None
+        self.deal_amount = None
         self.lever_rate = None
 
     def add_args(self, **kwargs):
@@ -90,6 +91,7 @@ class OKEXOrder(BaseOrder):
         self.status = result["orders"][0]["status"]
         self.amount = result["orders"][0]["amount"]
         self.lever_rate = result["orders"][0]["lever_rate"]
+        self.deal_amount = result["orders"][0]["deal_amount"]
         self.contract_type = result["orders"][0]["contract_type"]
         return result
 
