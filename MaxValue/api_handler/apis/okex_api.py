@@ -177,7 +177,7 @@ class OKEXAPI(TradeAPI):
                     elif "addChannel" == data_item["channel"]:
                         logger.info(f"频道{data_item['data']['channel']}订阅成功")
                 except Exception as e:
-                    logger.warn(e)
+                    logger.exception("异常")
 
     def trade(self):
         return OKEXTrade(self.rest_api)
@@ -220,7 +220,7 @@ class OKEXAPI(TradeAPI):
                 order_manager.set_buy_order(order)
         except Exception as e:
             traceback.print_exc()
-            logger.warn(e)
+            logger.exception("异常")
 
     def person_trade_info(self):
         pass
@@ -241,8 +241,7 @@ class OKEXAPI(TradeAPI):
                 order.price = price
                 order_manager.set_sell_order(order)
         except Exception as e:
-            traceback.print_exc()
-            logger.warn(e)
+            logger.exception("异常")
 
     async def get_position(self):
         result = await self.rest_api.future_position_4fix(symbol="btc_usd", contract_type="quarter")
@@ -329,7 +328,7 @@ class OKEXAPI2(OKEXAPI):
                 try:
                     await eval(f'{data_item["channel"]}(data_item)')
                 except Exception as e:
-                    logger.warn(e)
+                    logger.exception("异常")
 
 
 if __name__ == "__main__":

@@ -216,7 +216,7 @@ class BitMexAPI(TradeAPI):
             try:
                 await eval(f'{msg["table"]}(msg)')
             except Exception as e:
-                logger.warn(e)
+                logger.exception("异常")
 
     def get_market_info(self):
         return self.market_info
@@ -381,7 +381,7 @@ class BitMexAPI2(BitMexAPI):
             try:
                 await eval(f'{msg["table"]}(msg)')
             except Exception as e:
-                logger.warn(e)
+                logger.exception("异常")
 
 
 if __name__ == "__main__":

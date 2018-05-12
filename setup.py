@@ -3,7 +3,7 @@ from setuptools import setup, find_packages, __version__ as setuptools_version
 
 setup(
     name='MaxValue',
-    version='0.0.1',
+    version='0.0.2',
     packages=['MaxValue', 'MaxValue.conf', 'MaxValue.plan', 'MaxValue.utils', 'MaxValue.market', 'MaxValue.lancher', 'MaxValue.watcher', 'MaxValue.api_handler.apis', 'MaxValue.api_handler.base'],
     url='https://github.com/xulei890817/MaxValue.git',
     license='',
