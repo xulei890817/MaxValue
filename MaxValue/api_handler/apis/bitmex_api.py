@@ -275,7 +275,7 @@ class BitMexAPI(TradeAPI):
         result = self.rest_api.OrderBook.OrderBook_getL2(symbol=symbol, depth=depth).result()
         return result[0]
 
-    async def get_trade_info(self, symbol='XBTM18'):
+    async def get_order_list(self, symbol='XBTM18'):
         result = self.rest_api.Order.Order_getOrders(symbol=symbol).result()
         logger.debug(result[0])
         return result[0]
