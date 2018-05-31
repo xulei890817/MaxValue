@@ -214,7 +214,10 @@ class BitMexAPI(TradeAPI):
             return
         if "table" in msg:
             try:
-                await eval(f'{msg["table"]}(msg)')
+                if "quote" == msg["table"]:
+                    getattr(self.update_handler, "ticker")(msg)
+                elif "orderBook10" in msg["table"]:
+                    getattr(self.update_handler, "depth")(msg)
             except Exception as e:
                 logger.exception("异常")
 
