@@ -151,10 +151,9 @@ class BitMexAPI(TradeAPI):
     async def create_session(self):
         await self.ws_api.create_session()
 
-    async def sub_info(self):
+    async def sub_channel(self, channel):
         logger.info("订阅频道")
-        # await self.wsapi.sub_channels("instrument", "quote")
-        await self.ws_api.sub_channels("quote")
+        await self.ws_api.sub_channels(channel)
 
     def trade(self):
         return BitMexTrade(self.rest_api)
