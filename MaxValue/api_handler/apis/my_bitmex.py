@@ -6,7 +6,7 @@ from MaxValue.utils.proxy import proxy
 from MaxValue.utils.logger import logger
 
 
-class BITMEXWSTradeAPI(TradeAPI, WSAPI):
+class BITMEXWSTradeAPI(WSAPI):
     def __init__(self, loop):
         """
         _connect_status_flag ：代表连接的状态
