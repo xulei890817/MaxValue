@@ -41,6 +41,7 @@ class BitMexMarket(Market):
     def login(self, api_key, sign):
         self.api.api_key = api_key
         self.api.sign = sign
+        self.api.login(api_key, sign)
 
     def update_k_line(self, data):
         pass

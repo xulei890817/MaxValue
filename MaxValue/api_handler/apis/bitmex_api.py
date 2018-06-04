@@ -139,7 +139,7 @@ class BitMexAPI(TradeAPI):
         self.sign = None
         self.loop = loop
         self.market_refresh_handler = None
-        self.rest_api = bitmex.bitmex(test=False, api_key=self.api_key, api_secret=self.sign)
+        self.rest_api = bitmex.bitmex(test=False)
         self.ws_api = BITMEXWSTradeAPI(loop)
         self.ws_api.set_msg_handler(self)
         self.market_info = {"quote": {}, "quote_new_flag": False}
@@ -223,8 +223,8 @@ class BitMexAPI(TradeAPI):
     def get_market_info(self):
         return self.market_info
 
-    async def login(self):
-        pass
+    def login(self):
+        self.rest_api = bitmex.bitmex(test=False, api_key=self.api_key, api_secret=self.sign)
 
     @error_retry(exceptions=[HTTPServiceUnavailable], retry_times=5, sleep_seconds=0.2)
     async def buy(self, price, symbol, amount):
